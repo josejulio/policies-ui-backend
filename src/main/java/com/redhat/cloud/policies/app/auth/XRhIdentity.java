@@ -49,6 +49,18 @@ public class XRhIdentity {
         return identity.user.username;
     }
 
+    public String getUserId() {
+        if (identity == null) {
+            return null;
+        }
+
+        if (identity.type.equals(SERVICE_ACCOUNT_TYPE)) {
+            return identity.serviceAccount.clientId;
+        }
+
+        return identity.user.id;
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Identity {
 
@@ -68,6 +80,8 @@ public class XRhIdentity {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class User {
 
+        @JsonProperty("user_id")
+        public String id;
         public String email;
         @JsonProperty("first_name")
         public String firstName;

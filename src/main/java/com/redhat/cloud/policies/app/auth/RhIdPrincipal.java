@@ -33,6 +33,7 @@ public class RhIdPrincipal implements Principal {
     private List<UUID> hostGroupIds = List.of();
 
     private String rawRhId;
+    private String principal;
 
     public RhIdPrincipal() {
     }
@@ -80,6 +81,14 @@ public class RhIdPrincipal implements Principal {
 
     public String getRawRhIdHeader() {
         return rawRhId;
+    }
+
+    public String getPrincipal() {
+        return principal;
+    }
+
+    public void setPrincipal(String principal) {
+        this.principal = principal;
     }
 
     @Override
