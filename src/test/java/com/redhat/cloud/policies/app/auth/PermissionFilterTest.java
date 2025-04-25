@@ -1,39 +1,30 @@
 package com.redhat.cloud.policies.app.auth;
 
+import com.redhat.cloud.policies.app.auth.models.RbacRaw;
+import io.quarkus.test.InjectMock;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
+import org.jboss.resteasy.core.interception.jaxrs.PreMatchContainerRequestContext;
+import org.jboss.resteasy.mock.MockHttpRequest;
+import org.jboss.resteasy.spi.HttpRequest;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-
-import com.redhat.cloud.policies.app.auth.models.RbacRaw;
-import io.quarkus.test.InjectMock;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import jakarta.inject.Inject;
-import jakarta.ws.rs.container.ContainerRequestContext;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.SecurityContext;
-
-import org.jboss.resteasy.core.interception.jaxrs.PreMatchContainerRequestContext;
-import org.jboss.resteasy.mock.MockHttpRequest;
-import org.jboss.resteasy.spi.HttpRequest;
-
-import io.quarkus.test.junit.QuarkusTest;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @QuarkusTest
-public class RbacFilterTest {
+public class PermissionFilterTest {
     @InjectMock
     RbacClient rbacClient;
 
@@ -44,7 +35,7 @@ public class RbacFilterTest {
     RhIdPrincipal userPrincipal;
 
     @Inject
-    RbacFilter rbacFilter;
+    PermissionFilter permissionFilter;
 
     @Test
     void testAbortsOnRBACError() throws Exception {
@@ -53,7 +44,7 @@ public class RbacFilterTest {
         HttpRequest request = MockHttpRequest.get("/");
         PreMatchContainerRequestContext context = spy(new PreMatchContainerRequestContext(request, null, null));
 
-        rbacFilter.filter(context);
+        permissionFilter.filter(context);
         verifyAbortedAsForbidden(context);
 
         verify(user, times(0)).setRbac(Mockito.anyBoolean(), Mockito.anyBoolean(), any());
@@ -73,7 +64,7 @@ public class RbacFilterTest {
 
         context.setSecurityContext(securityContext());
 
-        rbacFilter.filter(context);
+        permissionFilter.filter(context);
         verify(context, Mockito.times(0)).abortWith(Mockito.any());
 
         // two calls are made, as user and userPrincipal are the same instances
@@ -107,7 +98,7 @@ public class RbacFilterTest {
         PreMatchContainerRequestContext context = spy(new PreMatchContainerRequestContext(request, null, null));
         context.setSecurityContext(securityContext());
 
-        rbacFilter.filter(context);
+        permissionFilter.filter(context);
         verify(context, Mockito.times(0)).abortWith(Mockito.any());
 
         // two calls are made, as user and userPrincipal are the same instances
@@ -132,7 +123,7 @@ public class RbacFilterTest {
         PreMatchContainerRequestContext context = spy(new PreMatchContainerRequestContext(request, null, null));
         context.setSecurityContext(securityContext());
 
-        rbacFilter.filter(context);
+        permissionFilter.filter(context);
         verifyAbortedAsForbidden(context);
 
         verify(user, times(0)).setRbac(Mockito.anyBoolean(), Mockito.anyBoolean(), any());
@@ -145,12 +136,12 @@ public class RbacFilterTest {
 
         HttpRequest request = MockHttpRequest.get("/admin");
         PreMatchContainerRequestContext context = spy(new PreMatchContainerRequestContext(request, null, null));
-        rbacFilter.filter(context);
+        permissionFilter.filter(context);
         verify(context, times(0)).abortWith(any());
 
         request = MockHttpRequest.get("/api/policies/v1.0/status");
         context = spy(new PreMatchContainerRequestContext(request, null, null));
-        rbacFilter.filter(context);
+        permissionFilter.filter(context);
         verify(context, times(0)).abortWith(any());
 
         verify(user, times(0)).setRbac(Mockito.anyBoolean(), Mockito.anyBoolean(), any());
@@ -180,7 +171,7 @@ public class RbacFilterTest {
 
     @Test
     void testHostGroupsToUUIDs() {
-        assertNull(RbacFilter.hostGroupsToUUIDs(null));
+        assertNull(PermissionFilter.hostGroupsToUUIDs(null));
 
         UUID ungrouped = null;
         UUID groudOne = UUID.randomUUID();
@@ -196,7 +187,7 @@ public class RbacFilterTest {
         expected.add(ungrouped);
         expected.add(groupTwo);
 
-        assertEquals(expected, RbacFilter.hostGroupsToUUIDs(groupsIn));
+        assertEquals(expected, PermissionFilter.hostGroupsToUUIDs(groupsIn));
     }
 
     @Test
@@ -218,13 +209,13 @@ public class RbacFilterTest {
         expected.add(ungrouped);
         expected.add(groupTwo);
 
-        assertEquals(expected, RbacFilter.hostGroupsToUUIDs(groupsIn));
+        assertEquals(expected, PermissionFilter.hostGroupsToUUIDs(groupsIn));
     }
 
     @Test
     void testHostGroupsToUUIDsMalformed() {
         assertThrows(IllegalArgumentException.class, () -> {
-            RbacFilter.hostGroupsToUUIDs(List.of("baduuid"));
+            PermissionFilter.hostGroupsToUUIDs(List.of("baduuid"));
         });
     }
 }

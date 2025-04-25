@@ -46,7 +46,7 @@ import java.util.Optional;
  * <p>
  * We don't yet query for RBAC here, as this filter is not part of the tracing
  * span, so we would not be able to trace the rbac calls.
- * See {@link RbacFilter} for this purpose.
+ * See {@link PermissionFilter} for this purpose.
  * <p>
  * Usage in code:
  * <pre>{@code
@@ -96,6 +96,7 @@ public class IncomingRequestFilter implements ContainerRequestFilter {
         // header was good, so now create the security context
         RhIdPrincipal rhPrincipal = new RhIdPrincipal(rhIdentity.getUsername(), rhIdentity.identity.accountNumber, rhIdentity.identity.orgId);
         rhPrincipal.setRawRhIdHeader(xrhid_header);
+        rhPrincipal.setPrincipal(rhIdentity.getUserId());
 
         // Attach account id, org id and user to the context so we could log it later
         if (rhPrincipal.getAccount() != null) {
